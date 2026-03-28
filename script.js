@@ -231,3 +231,70 @@
     };
   }
 })();
+// ===== Mobile swipe support (add at end of script.js) =====
+(function () {
+  let startX = 0;
+  let endX = 0;
+
+  function safeNext() {
+    try {
+      if (typeof goNext === "function") return goNext();
+      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("next");
+    } catch (e) {}
+  }
+
+  function safePrev() {
+    try {
+      if (typeof goPrev === "function") return goPrev();
+      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("previous");
+    } catch (e) {}
+  }
+
+  function attachSwipe() {
+    const target =
+      document.querySelector(".flipbook-shell") ||
+      document.getElementById("flipbook") ||
+      document.body;
+
+    if (!target || target.dataset.swipeAttached === "yes") return;
+    target.dataset.swipeAttached = "yes";
+
+    target.addEventListener(
+      "touchstart",
+      function (e) {
+        if (!e.touches || !e.touches.length) return;
+        startX = e.touches[0].clientX;
+      },
+      { passive: true }
+    );
+
+    target.addEventListener(
+      "touchend",
+      function (e) {
+        if (!e.changedTouches || !e.changedTouches.length) return;
+        endX = e.changedTouches[0].clientX;
+
+        const diff = startX - endX;
+        const minSwipe = 35; // sensitivity
+
+        if (Math.abs(diff) < minSwipe) return;
+
+        if (diff > 0) {
+          // swipe left = next
+          safeNext();
+        } else {
+          // swipe right = previous
+          safePrev();
+        }
+      },
+      { passive: true }
+    );
+  }
+
+  // try immediately
+  attachSwipe();
+
+  // try again after flipbook loads
+  setTimeout(attachSwipe, 800);
+  setTimeout(attachSwipe, 1500);
+})();
