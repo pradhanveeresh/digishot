@@ -1,91 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pradhan Brothers - Digital Flipbook</title>
-    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
-    
-    <script src="js/turn.min.js"></script>
-
+    <script src="https://rawcdn.githack.com/blasten/turn.js/master/turn.min.js"></script>
     <style>
-        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #canvas-container { position: relative; width: 95%; height: 90%; display: flex; justify-content: center; align-items: center; }
-        #flipbook { width: 1000px; height: 600px; visibility: hidden; } /* Pehle hide rahega jab tak load na ho */
-        .page { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        canvas { width: 100%; height: 100%; }
-        .loader { color: gold; position: absolute; font-size: 1.2rem; font-weight: bold; }
+        body { background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #flipbook { width: 800px; height: 500px; }
+        .page { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
+        
+        /* असली मैगजीन वाली बीच की परछाई (The Crease) */
+        .page-wrapper { -webkit-perspective: 2000px; -moz-perspective: 2000px; }
+        .shadow { 
+            -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+            -moz-box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+        }
     </style>
 </head>
 <body>
 
-<div class="loader" id="loader">Aapki Album Load Ho Rahi Hai...</div>
-
-<div id="canvas-container">
-    <div id="flipbook">
-        </div>
+<div id="flipbook">
+    <div class="page"><img src="albums/1.jpg" width="100%" height="100%"></div>
+    <div class="page"><img src="albums/2.jpg" width="100%" height="100%"></div>
+    <div class="page"><img src="albums/3.jpg" width="100%" height="100%"></div>
+    <div class="page"><img src="albums/4.jpg" width="100%" height="100%"></div>
 </div>
 
 <script>
-    // 1. URL se PDF ka naam lena (?file=shadi1)
-    const params = new URLSearchParams(window.location.search);
-    const pdfFileName = params.get('file'); 
-    
-    if (!pdfFileName) {
-        document.getElementById('loader').innerText = "Kripya Link mein ?file=name jodein!";
-    } else {
-        const pdfPath = `albums/${pdfFileName}.pdf`;
-
-        // 2. PDF.js Config
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
-
-        async function initFlipbook() {
-            try {
-                const pdf = await pdfjsLib.getDocument(pdfPath).promise;
-                
-                // Har page ke liye Div aur Canvas banana
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const pageDiv = $('<div class="page" />');
-                    $('#flipbook').append(pageDiv);
-                    await renderPDFPage(pdf, i, pageDiv);
-                }
-
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('flipbook').style.visibility = 'visible';
-
-                // 3. Turn.js Activation
-                $("#flipbook").turn({
-                    width: 1000,
-                    height: 600,
-                    autoCenter: true,
-                    duration: 1000,
-                    gradients: true,
-                    acceleration: true
-                });
-
-            } catch (err) {
-                document.getElementById('loader').innerText = "Album File Nahi Mili! Folder aur Naam Check Karein।";
-                console.error(err);
+    $("#flipbook").turn({
+        width: 800,
+        height: 500,
+        autoCenter: true,
+        display: 'double', // असली एलबम लुक
+        acceleration: true,
+        gradients: true, // पन्ना मुड़ते वक्त की चमक
+        elevation: 50,
+        when: {
+            turning: function(e, page, view) {
+                console.log("Page " + page + " पलट रहा है!");
             }
         }
-
-        async function renderPDFPage(pdf, num, container) {
-            const page = await pdf.getPage(num);
-            const viewport = page.getViewport({ scale: 2 }); // High Quality ke liye
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            container.append(canvas);
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
-        }
-
-        initFlipbook();
-    }
+    });
 </script>
 
 </body>
 </html>
+
