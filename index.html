@@ -1,56 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Pradhan Brothers Digital Album</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
-    <script src="https://rawcdn.githack.com/blasten/turn.js/master/turn.min.js"></script>
-    <style>
-        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        #flipbook { width: 1000px; height: 600px; visibility: hidden; }
-        .page { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        canvas { width: 100%; height: 100%; }
-        #loader { color: gold; font-family: sans-serif; position: absolute; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DigiShot Wedding Flipbook</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+  <div class="page-bg"></div>
 
-<div id="loader">आपकी एलबम लोड हो रही है...</div>
-<div id="flipbook"></div>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand-wrap">
+        <h1 id="albumTitle">DigiShot Wedding Album</h1>
+        <p class="subtitle">Elegant digital memories</p>
+      </div>
 
-<script>
-    // 1. अपनी PDF का सही रास्ता (Path) यहाँ लिखो
-    // अगर फाइल 'albums' फोल्डर में 'wedding.pdf' है, तो यही रहने दो
-    const pdfPath = 'albums/wedding.pdf'; 
+      <div class="controls-top">
+        <button id="prevBtn" class="btn gold-btn">⟵ Prev</button>
+        <span id="pageInfo" class="page-info">Page 0 / 0</span>
+        <button id="nextBtn" class="btn gold-btn">Next ⟶</button>
+      </div>
+    </header>
 
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+    <main class="viewer-area">
+      <div id="loadingOverlay" class="loading-overlay">
+        <div class="loader-card">
+          <div class="spinner"></div>
+          <h2>Loading your wedding album...</h2>
+          <p>Please wait while pages are being prepared.</p>
+        </div>
+      </div>
 
-    async function loadPDF() {
-        try {
-            const pdf = await pdfjsLib.getDocument(pdfPath).promise;
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const pageDiv = $('<div class="page" />');
-                $('#flipbook').append(pageDiv);
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1.5 });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                pageDiv.append(canvas);
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-            }
-            
-            $('#loader').hide();
-            $('#flipbook').css('visibility', 'visible').turn({
-                width: 1000, height: 600, autoCenter: true, display: 'double', gradients: true
-            });
-        } catch (err) {
-            $('#loader').text("PDF फाइल नहीं मिली! नाम चेक करें।");
-        }
-    }
-    loadPDF();
-</script>
+      <div class="book-frame">
+        <div id="flipbook"></div>
+      </div>
+    </main>
+
+    <footer class="bottom-bar">
+      <div class="music-panel">
+        <button id="musicToggle" class="btn music-btn">🔇 Play Music</button>
+        <span id="musicLabel">Music: Not started</span>
+      </div>
+
+      <div class="link-panel">
+        <button id="copyLinkBtn" class="btn secondary-btn">Copy Link</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Hidden audio -->
+  <audio id="bgMusic" preload="auto" loop></audio>
+
+  <!-- Libraries -->
+  <script src="./libs/jquery.min.js"></script>
+  <script src="./libs/turn.min.js"></script>
+  <script src="./libs/pdf.min.js"></script>
+
+  <!-- App Script -->
+  <script src="./script.js"></script>
 </body>
 </html>
