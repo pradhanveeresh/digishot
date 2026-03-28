@@ -3,61 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiShot Wedding Flipbook</title>
+  <title>DigiShot Premium Wedding Album</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="page-bg"></div>
+  <div class="scene-bg"></div>
 
   <div class="app-shell">
-    <header class="top-bar">
-      <div class="brand-wrap">
-        <h1 id="albumTitle">DigiShot Wedding Album</h1>
-        <p class="subtitle">Elegant digital memories</p>
-      </div>
+    <!-- TABLE + CLOSED ALBUM VIEW -->
+    <section id="introScene" class="intro-scene">
+      <div class="table-stage">
+        <div class="table-surface"></div>
 
-      <div class="controls-top">
-        <button id="prevBtn" class="btn gold-btn">⟵ Prev</button>
-        <span id="pageInfo" class="page-info">Page 0 / 0</span>
-        <button id="nextBtn" class="btn gold-btn">Next ⟶</button>
-      </div>
-    </header>
-
-    <main class="viewer-area">
-      <div id="loadingOverlay" class="loading-overlay">
-        <div class="loader-card">
-          <div class="spinner"></div>
-          <h2>Loading your wedding album...</h2>
-          <p>Please wait while pages are being prepared.</p>
+        <div id="closedAlbum" class="closed-album">
+          <div class="album-spine"></div>
+          <div class="album-cover-front">
+            <div class="cover-inner">
+              <p class="cover-label">DigiShot Premium</p>
+              <h1 id="coverTitle">Wedding Album</h1>
+              <p class="cover-sub">Timeless Memories</p>
+            </div>
+          </div>
+          <div class="album-pages-stack"></div>
         </div>
-      </div>
 
-      <div class="book-frame">
-        <div id="flipbook"></div>
+        <button id="enterAlbumBtn" class="glass-btn intro-open-btn">Open Album</button>
       </div>
-    </main>
+    </section>
 
-    <footer class="bottom-bar">
-      <div class="music-panel">
-        <button id="musicToggle" class="btn music-btn">🔇 Play Music</button>
-        <span id="musicLabel">Music: Not started</span>
-      </div>
+    <!-- MAIN VIEWER -->
+    <section id="viewerScene" class="viewer-scene hidden">
+      <header class="top-bar">
+        <div class="brand-wrap">
+          <h1 id="albumTitle">Wedding Album</h1>
+          <p class="subtitle">Luxury digital hardcover experience</p>
+        </div>
 
-      <div class="link-panel">
-        <button id="copyLinkBtn" class="btn secondary-btn">Copy Link</button>
-      </div>
-    </footer>
+        <div class="controls-top">
+          <button id="prevBtn" class="glass-btn">⟵</button>
+          <span id="pageInfo" class="page-info">Page 0 / 0</span>
+          <button id="nextBtn" class="glass-btn">⟶</button>
+        </div>
+      </header>
+
+      <main class="viewer-area">
+        <div id="loadingOverlay" class="loading-overlay">
+          <div class="loader-card">
+            <div class="spinner"></div>
+            <h2>Opening your premium album...</h2>
+            <p>Please wait while pages are prepared.</p>
+          </div>
+        </div>
+
+        <div class="album-stage">
+          <!-- Physical album shell -->
+          <div class="physical-album-shell">
+            <div class="album-back-shadow"></div>
+            <div class="album-thickness-left"></div>
+            <div class="album-thickness-bottom"></div>
+
+            <div class="album-hardcover">
+              <div class="album-inner-frame">
+                <div class="page-mat">
+                  <div id="flipbook"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="bottom-bar">
+        <div class="music-panel">
+          <button id="musicToggle" class="glass-btn">♫</button>
+          <span id="musicLabel">Music: Not started</span>
+        </div>
+
+        <div class="link-panel">
+          <button id="copyLinkBtn" class="glass-btn">Copy</button>
+          <button id="fullscreenBtn" class="glass-btn">⛶</button>
+        </div>
+      </footer>
+    </section>
   </div>
 
-  <!-- Hidden audio -->
   <audio id="bgMusic" preload="auto" loop></audio>
 
-  <!-- Libraries -->
   <script src="./libs/jquery.min.js"></script>
   <script src="./libs/turn.min.js"></script>
   <script src="./libs/pdf.min.js"></script>
-
-  <!-- App Script -->
   <script src="./script.js"></script>
 </body>
 </html>
