@@ -2,6 +2,7 @@
   const flipbookEl = document.getElementById("flipbook");
   const loadingOverlay = document.getElementById("loadingOverlay");
   const albumTitleEl = document.getElementById("albumTitle");
+  const coverTitleEl = document.getElementById("coverTitle");
   const pageInfoEl = document.getElementById("pageInfo");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
@@ -9,6 +10,12 @@
   const musicToggleBtn = document.getElementById("musicToggle");
   const musicLabelEl = document.getElementById("musicLabel");
   const audioEl = document.getElementById("bgMusic");
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+  const introScene = document.getElementById("introScene");
+  const viewerScene = document.getElementById("viewerScene");
+  const enterAlbumBtn = document.getElementById("enterAlbumBtn");
+  const closedAlbum = document.getElementById("closedAlbum");
 
   const params = new URLSearchParams(window.location.search);
   const albumName = sanitizeName(params.get("album")) || "test";
@@ -22,58 +29,16 @@
   let isMusicPlaying = false;
   let isBookReady = false;
 
-  // IMPORTANT: PDF.js worker
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
   }
 
-  // Initial title
-  albumTitleEl.textContent = formatAlbumTitle(albumName);
+  const formattedAlbum = formatAlbumTitle(albumName);
+  albumTitleEl.textContent = formattedAlbum;
+  coverTitleEl.textContent = formattedAlbum;
 
-  // Setup controls
-  prevBtn.addEventListener("click", () => {
-    if (isBookReady) $("#flipbook").turn("previous");
-  });
-
-  nextBtn.addEventListener("click", () => {
-    if (isBookReady) $("#flipbook").turn("next");
-  });
-
-  copyLinkBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      copyLinkBtn.textContent = "Copied!";
-      setTimeout(() => {
-        copyLinkBtn.textContent = "Copy Link";
-      }, 1600);
-    } catch (err) {
-      alert("Could not copy link automatically. Please copy it manually.");
-    }
-  });
-
-  musicToggleBtn.addEventListener("click", async () => {
-    if (!audioEl.src) return;
-
-    try {
-      if (isMusicPlaying) {
-        audioEl.pause();
-        isMusicPlaying = false;
-        musicToggleBtn.textContent = "🔇 Play Music";
-        musicLabelEl.textContent = `Music: ${musicName} (paused)`;
-      } else {
-        await audioEl.play();
-        isMusicPlaying = true;
-        musicToggleBtn.textContent = "🔊 Pause Music";
-        musicLabelEl.textContent = `Music: ${musicName} (playing)`;
-      }
-    } catch (err) {
-      musicLabelEl.textContent = "Music blocked by browser. Tap again.";
-    }
-  });
-
-  // Start loading
+  setupControls();
   loadMusic();
-  loadPdfAndBuild();
 
   function sanitizeName(value) {
     if (!value) return "";
@@ -88,10 +53,72 @@
       .join(" ");
   }
 
-  function showError(message) {
-    loadingOverlay.style.display = "none";
-    flipbookEl.style.display = "block";
-    flipbookEl.innerHTML = `<div class="error-box">${message}</div>`;
+  function setupControls() {
+    enterAlbumBtn.addEventListener("click", openAlbumExperience);
+    closedAlbum.addEventListener("click", openAlbumExperience);
+
+    prevBtn.addEventListener("click", goPrev);
+    nextBtn.addEventListener("click", goNext);
+
+    copyLinkBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        const original = copyLinkBtn.textContent;
+        copyLinkBtn.textContent = "Copied";
+        setTimeout(() => (copyLinkBtn.textContent = original), 1400);
+      } catch (err) {
+        alert("Could not copy link automatically.");
+      }
+    });
+
+    musicToggleBtn.addEventListener("click", async () => {
+      if (!audioEl.src) return;
+
+      try {
+        if (isMusicPlaying) {
+          audioEl.pause();
+          isMusicPlaying = false;
+          musicToggleBtn.textContent = "♫";
+          musicLabelEl.textContent = `Music: ${musicName} (paused)`;
+        } else {
+          await audioEl.play();
+          isMusicPlaying = true;
+          musicToggleBtn.textContent = "❚❚";
+          musicLabelEl.textContent = `Music: ${musicName} (playing)`;
+        }
+      } catch (err) {
+        musicLabelEl.textContent = "Tap again to allow music";
+      }
+    });
+
+    if (fullscreenBtn) {
+      fullscreenBtn.addEventListener("click", toggleFullscreen);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (!isBookReady) return;
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    });
+  }
+
+  async function openAlbumExperience() {
+    introScene.classList.add("hidden");
+    viewerScene.classList.remove("hidden");
+
+    // Try autoplay after user click
+    if (audioEl.src && !isMusicPlaying) {
+      try {
+        await audioEl.play();
+        isMusicPlaying = true;
+        musicToggleBtn.textContent = "❚❚";
+        musicLabelEl.textContent = `Music: ${musicName} (playing)`;
+      } catch (err) {}
+    }
+
+    if (!isBookReady) {
+      loadPdfAndBuild();
+    }
   }
 
   function loadMusic() {
@@ -101,13 +128,23 @@
     audioEl.addEventListener("error", () => {
       musicLabelEl.textContent = `Music not found: ${musicName}.mp3`;
       musicToggleBtn.disabled = true;
-      musicToggleBtn.style.opacity = "0.6";
+      musicToggleBtn.style.opacity = "0.55";
       musicToggleBtn.style.cursor = "not-allowed";
     });
 
-    audioEl.addEventListener("canplaythrough", () => {
-      musicLabelEl.textContent = `Music ready: ${musicName}`;
-    }, { once: true });
+    audioEl.addEventListener(
+      "canplaythrough",
+      () => {
+        musicLabelEl.textContent = `Music ready: ${musicName}`;
+      },
+      { once: true }
+    );
+  }
+
+  function showError(message) {
+    loadingOverlay.style.display = "none";
+    flipbookEl.style.display = "block";
+    flipbookEl.innerHTML = `<div class="error-box">${message}</div>`;
   }
 
   async function loadPdfAndBuild() {
@@ -127,34 +164,38 @@
       }
 
       const isMobile = window.innerWidth < 768;
-      const pageWidth = isMobile ? Math.min(window.innerWidth - 50, 360) : 500;
-      const pageHeight = isMobile ? Math.round(pageWidth * 1.35) : 680;
 
-      // For desktop: 2 pages side by side
-      // For mobile: single page view
-      const bookWidth = isMobile ? pageWidth : pageWidth * 2;
-      const bookHeight = pageHeight;
+      // FIXED ALBUM INNER PAGE AREA
+      // Outer album fixed, inner page area controlled here
+      const pageAreaWidth = isMobile ? 320 : 920;
+      const pageAreaHeight = isMobile ? 470 : 600;
+
+      // Margins remain because page area is smaller than hardcover shell
+      const singlePageWidth = isMobile ? pageAreaWidth : Math.floor(pageAreaWidth / 2);
+      const singlePageHeight = pageAreaHeight;
+
+      const bookWidth = isMobile ? singlePageWidth : singlePageWidth * 2;
+      const bookHeight = singlePageHeight;
 
       flipbookEl.innerHTML = "";
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const pageDiv = document.createElement("div");
         pageDiv.className = "page";
-        pageDiv.style.width = `${pageWidth}px`;
-        pageDiv.style.height = `${pageHeight}px`;
+        pageDiv.style.width = `${singlePageWidth}px`;
+        pageDiv.style.height = `${singlePageHeight}px`;
 
         const canvas = document.createElement("canvas");
         pageDiv.appendChild(canvas);
         flipbookEl.appendChild(pageDiv);
 
-        await renderPdfPage(pageNum, canvas, pageWidth);
+        await renderPdfPageFit(pageNum, canvas, singlePageWidth, singlePageHeight);
       }
 
       flipbookEl.style.width = `${bookWidth}px`;
       flipbookEl.style.height = `${bookHeight}px`;
       flipbookEl.style.display = "block";
 
-      // Destroy if already exists (safe reload case)
       if ($("#flipbook").data("turn")) {
         $("#flipbook").turn("destroy");
       }
@@ -163,7 +204,7 @@
         width: bookWidth,
         height: bookHeight,
         autoCenter: true,
-        elevation: 50,
+        elevation: 40,
         gradients: true,
         display: isMobile ? "single" : "double",
         when: {
@@ -177,11 +218,14 @@
       updatePageInfo(1);
       loadingOverlay.style.display = "none";
 
-      // Resize support
-      window.addEventListener("resize", debounce(() => {
-        rebuildOnResize();
-      }, 400));
+      window.addEventListener(
+        "resize",
+        debounce(() => {
+          if (pdfDoc) location.reload();
+        }, 400)
+      );
 
+      attachSwipe();
     } catch (error) {
       console.error("PDF load/render error:", error);
       showError(
@@ -191,36 +235,72 @@
     }
   }
 
-  async function renderPdfPage(pageNum, canvas, targetWidth) {
+  // FIT page inside fixed frame while preserving margins
+  async function renderPdfPageFit(pageNum, canvas, boxWidth, boxHeight) {
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1 });
 
-    const scale = targetWidth / viewport.width;
+    const scaleX = boxWidth / viewport.width;
+    const scaleY = boxHeight / viewport.height;
+    const scale = Math.min(scaleX, scaleY); // fit inside
+
     const scaledViewport = page.getViewport({ scale });
 
     const context = canvas.getContext("2d");
-    canvas.width = scaledViewport.width;
-    canvas.height = scaledViewport.height;
+    canvas.width = boxWidth;
+    canvas.height = boxHeight;
+
+    context.fillStyle = "#fffdf9";
+    context.fillRect(0, 0, boxWidth, boxHeight);
+
+    const offsetX = (boxWidth - scaledViewport.width) / 2;
+    const offsetY = (boxHeight - scaledViewport.height) / 2;
 
     await page.render({
       canvasContext: context,
-      viewport: scaledViewport
+      viewport: scaledViewport,
+      transform: [1, 0, 0, 1, offsetX, offsetY]
     }).promise;
   }
 
   function updatePageInfo(currentPage) {
     if (!totalPages) {
-      pageInfoEl.textContent = "Page 0 / 0";
+      pageInfoEl.textContent = "0 / 0";
       return;
     }
 
-    pageInfoEl.textContent = `Page ${currentPage} / ${totalPages}`;
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+      pageInfoEl.textContent = `${currentPage} / ${totalPages}`;
+    } else {
+      const leftPage = currentPage;
+      const rightPage = Math.min(currentPage + 1, totalPages);
+
+      if (currentPage >= totalPages) {
+        pageInfoEl.textContent = `${currentPage} / ${totalPages}`;
+      } else {
+        pageInfoEl.textContent = `${leftPage}-${rightPage} / ${totalPages}`;
+      }
+    }
   }
 
-  function rebuildOnResize() {
-    // Simple safe reload to keep layout stable on orientation change / resize
-    if (!pdfDoc) return;
-    location.reload();
+  function goNext() {
+    if (isBookReady) $("#flipbook").turn("next");
+  }
+
+  function goPrev() {
+    if (isBookReady) $("#flipbook").turn("previous");
+  }
+
+  async function toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {}
   }
 
   function debounce(fn, delay) {
@@ -230,29 +310,13 @@
       timeout = setTimeout(() => fn.apply(this, arguments), delay);
     };
   }
-})();
-// ===== Mobile swipe support (add at end of script.js) =====
-(function () {
-  let startX = 0;
-  let endX = 0;
-
-  function safeNext() {
-    try {
-      if (typeof goNext === "function") return goNext();
-      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("next");
-    } catch (e) {}
-  }
-
-  function safePrev() {
-    try {
-      if (typeof goPrev === "function") return goPrev();
-      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("previous");
-    } catch (e) {}
-  }
 
   function attachSwipe() {
+    let startX = 0;
+    let endX = 0;
+
     const target =
-      document.querySelector(".flipbook-shell") ||
+      document.querySelector(".physical-album-shell") ||
       document.getElementById("flipbook") ||
       document.body;
 
@@ -275,26 +339,17 @@
         endX = e.changedTouches[0].clientX;
 
         const diff = startX - endX;
-        const minSwipe = 35; // sensitivity
+        const minSwipe = 35;
 
         if (Math.abs(diff) < minSwipe) return;
 
         if (diff > 0) {
-          // swipe left = next
-          safeNext();
+          goNext();
         } else {
-          // swipe right = previous
-          safePrev();
+          goPrev();
         }
       },
       { passive: true }
     );
   }
-
-  // try immediately
-  attachSwipe();
-
-  // try again after flipbook loads
-  setTimeout(attachSwipe, 800);
-  setTimeout(attachSwipe, 1500);
 })();
