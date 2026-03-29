@@ -1,0 +1,98 @@
+/* =========================================
+   DIGISHOT PREMIUM CSS (No Black Bar + Left Buttons)
+========================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; 
+  font-family: sans-serif;
+  background-color: #5a1818 !important; 
+  background-image: radial-gradient(#350a0a 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* Preloader */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* App Layout */
+.app-shell {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 10px; /* Ab niche jagah ki dikkat nahi */
+}
+
+/* Transparent Bottom Bar with Left Aligned Buttons */
+.bottom-bar-fixed {
+  position: fixed !important;
+  bottom: 15px !important;
+  left: 15px !important;
+  width: auto !important; /* Poori chaurai nahi lega */
+  background: transparent !important; /* Black patti khatam */
+  display: flex !important;
+  gap: 10px !important;
+  z-index: 1000 !important;
+}
+
+/* Chhote Buttons (Landscape ke liye optimized) */
+.control-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 8px !important; 
+  background: rgba(255, 255, 255, 0.1) !important; /* Halka transparent background */
+  color: #fff !important;
+  font-size: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(5px); /* Premium look */
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Hard Cover */
+.hard {
+  background-color: #2c2e33 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+
+.page { background-color: #ffffff !important; }
+
+/* Mobile specifically */
+@media (max-width: 768px) {
+  .control-btn {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 16px !important;
+  }
+  .bottom-bar-fixed {
+    bottom: 10px !important;
+    left: 10px !important;
+    gap: 8px !important;
+  }
+}
