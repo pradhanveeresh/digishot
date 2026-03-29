@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>DigiShot Premium Flipbook</title>
   <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </head>
 <body>
-  <div class="page-bg"></div>
+  <div id="app-bg" class="page-bg"></div>
+  
+  <div id="particles-js" style="position:fixed; inset:0; z-index:1; pointer-events:none;"></div>
 
   <div id="loadingOverlay" class="loading-overlay">
     <div class="logo-circle">
@@ -17,16 +20,10 @@
   </div>
 
   <div class="app-shell">
-    
     <main class="viewer-area">
       <div class="book-frame">
         <div id="flipbook">
-          
-          <div class="hard front-cover"></div>
-
-          <div class="hard back-cover"></div>
-
-        </div>
+          </div>
       </div>
     </main>
 
@@ -36,17 +33,13 @@
       <button id="musicToggle" class="control-btn" title="Play/Pause Music">🎵</button>
       <button id="fullscreenBtn" class="control-btn" title="Full Screen">⛶</button>
     </div>
-
   </div>
 
-  <audio id="bgMusic" preload="auto" loop>
-    <source src="assets/music.mp3" type="audio/mpeg">
-  </audio>
+  <audio id="bgMusic" loop></audio>
 
   <script src="./libs/jquery.min.js"></script>
   <script src="./libs/turn.min.js"></script>
   <script src="./libs/pdf.min.js"></script>
-
   <script src="./script.js"></script>
 </body>
 </html>
