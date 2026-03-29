@@ -1,15 +1,14 @@
 (function () {
+  // Elements ko select karna
   const flipbookEl = document.getElementById("flipbook");
   const loadingOverlay = document.getElementById("loadingOverlay");
-  const albumTitleEl = document.getElementById("albumTitle");
-  const pageInfoEl = document.getElementById("pageInfo");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
-  const copyLinkBtn = document.getElementById("copyLinkBtn");
   const musicToggleBtn = document.getElementById("musicToggle");
-  const musicLabelEl = document.getElementById("musicLabel");
+  const fullscreenBtn = document.getElementById("fullscreenBtn");
   const audioEl = document.getElementById("bgMusic");
 
+  // URL se PDF aur Music ka naam lena (Ya default use karna)
   const params = new URLSearchParams(window.location.search);
   const albumName = sanitizeName(params.get("album")) || "test";
   const musicName = sanitizeName(params.get("music")) || "ringtone";
@@ -22,97 +21,71 @@
   let isMusicPlaying = false;
   let isBookReady = false;
 
-  // IMPORTANT: PDF.js worker
+  // PDF.js worker setup
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
   }
 
-  // Initial title
-  albumTitleEl.textContent = formatAlbumTitle(albumName);
+  // --- Button Controls ---
 
-  // Setup controls
+  // 1. Previous & Next Page
   prevBtn.addEventListener("click", () => {
-    if (isBookReady) $("#flipbook").turn("previous");
+    if (isBookReady) $(flipbookEl).turn("previous");
   });
 
   nextBtn.addEventListener("click", () => {
-    if (isBookReady) $("#flipbook").turn("next");
+    if (isBookReady) $(flipbookEl).turn("next");
   });
 
-  copyLinkBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      copyLinkBtn.textContent = "Copied!";
-      setTimeout(() => {
-        copyLinkBtn.textContent = "Copy Link";
-      }, 1600);
-    } catch (err) {
-      alert("Could not copy link automatically. Please copy it manually.");
-    }
-  });
-
+  // 2. Play/Pause Music
   musicToggleBtn.addEventListener("click", async () => {
     if (!audioEl.src) return;
-
     try {
       if (isMusicPlaying) {
         audioEl.pause();
         isMusicPlaying = false;
-        musicToggleBtn.textContent = "🔇 Play Music";
-        musicLabelEl.textContent = `Music: ${musicName} (paused)`;
+        musicToggleBtn.style.filter = "brightness(1)"; // Normal look
       } else {
         await audioEl.play();
         isMusicPlaying = true;
-        musicToggleBtn.textContent = "🔊 Pause Music";
-        musicLabelEl.textContent = `Music: ${musicName} (playing)`;
+        musicToggleBtn.style.filter = "brightness(0.7)"; // Playing look
       }
     } catch (err) {
-      musicLabelEl.textContent = "Music blocked by browser. Tap again.";
+      console.log("Music error:", err);
     }
   });
 
-  // Start loading
+  // 3. Full Screen Toggle
+  fullscreenBtn.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Start initialization
   loadMusic();
   loadPdfAndBuild();
+
+  // --- Helper Functions ---
 
   function sanitizeName(value) {
     if (!value) return "";
     return value.replace(/[^a-zA-Z0-9-_]/g, "");
   }
 
-  function formatAlbumTitle(slug) {
-    return slug
-      .split("-")
-      .filter(Boolean)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  }
-
-  function showError(message) {
-    loadingOverlay.style.display = "none";
-    flipbookEl.style.display = "block";
-    flipbookEl.innerHTML = `<div class="error-box">${message}</div>`;
-  }
-
   function loadMusic() {
     audioEl.src = musicPath;
     audioEl.load();
-
-    audioEl.addEventListener("error", () => {
-      musicLabelEl.textContent = `Music not found: ${musicName}.mp3`;
-      musicToggleBtn.disabled = true;
-      musicToggleBtn.style.opacity = "0.6";
-      musicToggleBtn.style.cursor = "not-allowed";
-    });
-
-    audioEl.addEventListener("canplaythrough", () => {
-      musicLabelEl.textContent = `Music ready: ${musicName}`;
-    }, { once: true });
   }
 
+  // PDF Load aur Book Banane ka main function
   async function loadPdfAndBuild() {
     if (!window.pdfjsLib) {
-      showError("PDF.js library not loaded.");
+      alert("PDF.js library not loaded.");
       return;
     }
 
@@ -122,105 +95,94 @@
       totalPages = pdfDoc.numPages;
 
       if (!totalPages) {
-        showError("This PDF has no pages.");
+        alert("This PDF has no pages.");
         return;
       }
 
-      const isMobile = window.innerWidth < 768;
-      const pageWidth = isMobile ? Math.min(window.innerWidth - 50, 360) : 500;
-      const pageHeight = isMobile ? Math.round(pageWidth * 1.35) : 680;
+      // Responsive Size Logic (Laptop jaisa Mobile me)
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      // Calculate book size keeping aspect ratio (e.g., 800x600 for double page)
+      let bookWidth = screenWidth > 900 ? 1000 : screenWidth * 0.95;
+      let bookHeight = bookWidth * 0.6; // 10:6 aspect ratio
 
-      // For desktop: 2 pages side by side
-      // For mobile: single page view
-      const bookWidth = isMobile ? pageWidth : pageWidth * 2;
-      const bookHeight = pageHeight;
+      // Agar height screen se badi ho rahi hai, to height ke hisaab se adjust karein
+      if (bookHeight > screenHeight * 0.75) {
+        bookHeight = screenHeight * 0.75;
+        bookWidth = bookHeight / 0.6;
+      }
 
-      flipbookEl.innerHTML = "";
+      const pageWidth = bookWidth / 2;
+      const pageHeight = bookHeight;
 
+      const backCover = document.querySelector('.back-cover');
+
+      // PDF pages ko Front aur Back cover ke beech me daalna
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const pageDiv = document.createElement("div");
-        pageDiv.className = "page";
-        pageDiv.style.width = `${pageWidth}px`;
-        pageDiv.style.height = `${pageHeight}px`;
+        pageDiv.className = "page"; 
+        pageDiv.style.backgroundColor = "#fff";
 
         const canvas = document.createElement("canvas");
         pageDiv.appendChild(canvas);
-        flipbookEl.appendChild(pageDiv);
+        
+        // Insert before the back cover
+        flipbookEl.insertBefore(pageDiv, backCover);
 
+        // Render PDF frame
         await renderPdfPage(pageNum, canvas, pageWidth);
       }
 
-      flipbookEl.style.width = `${bookWidth}px`;
-      flipbookEl.style.height = `${bookHeight}px`;
-      flipbookEl.style.display = "block";
-
-      // Destroy if already exists (safe reload case)
-      if ($("#flipbook").data("turn")) {
-        $("#flipbook").turn("destroy");
-      }
-
-      $("#flipbook").turn({
+      // Turn.js initialize karna (FlipHTML5 jaisa smooth effect)
+      $(flipbookEl).turn({
         width: bookWidth,
         height: bookHeight,
         autoCenter: true,
-        elevation: 50,
-        gradients: true,
-        display: isMobile ? "single" : "double",
-        when: {
-          turned: function (event, page) {
-            updatePageInfo(page);
-          }
-        }
+        elevation: 50, // 3D shadow effect
+        gradients: true, // Smooth shading
+        display: "double", // Hamesha dono pages dikhenge (Mobile me bhi)
+        duration: 1200 // Thoda slow aur premium flip
       });
 
       isBookReady = true;
-      updatePageInfo(1);
-      loadingOverlay.style.display = "none";
 
-      // Resize support
+      // Book ready hone ke baad Preloader smooth fade-out hoga
+      setTimeout(() => {
+        loadingOverlay.style.transition = "opacity 0.6s ease";
+        loadingOverlay.style.opacity = "0";
+        setTimeout(() => {
+          loadingOverlay.style.display = "none";
+        }, 600);
+      }, 500);
+
+      // Screen size badalne par book adjust ho
       window.addEventListener("resize", debounce(() => {
-        rebuildOnResize();
-      }, 400));
+        location.reload();
+      }, 500));
 
     } catch (error) {
-      console.error("PDF load/render error:", error);
-      showError(
-        `Could not load album <strong>${albumName}.pdf</strong>.<br><br>
-         Check file path: <strong>albums/${albumName}.pdf</strong>`
-      );
+      console.error("Error loading PDF:", error);
+      loadingOverlay.innerHTML = `<h3 style="color:white; text-align:center;">Could not load ${albumName}.pdf<br>Check if file exists!</h3>`;
     }
   }
 
   async function renderPdfPage(pageNum, canvas, targetWidth) {
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 1 });
-
-    const scale = targetWidth / viewport.width;
-    const scaledViewport = page.getViewport({ scale });
-
+    
+    // High Quality Render ke liye scale badhaya gaya hai
+    const viewport = page.getViewport({ scale: 2.0 }); 
     const context = canvas.getContext("2d");
-    canvas.width = scaledViewport.width;
-    canvas.height = scaledViewport.height;
+    
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
 
     await page.render({
       canvasContext: context,
-      viewport: scaledViewport
+      viewport: viewport
     }).promise;
-  }
-
-  function updatePageInfo(currentPage) {
-    if (!totalPages) {
-      pageInfoEl.textContent = "Page 0 / 0";
-      return;
-    }
-
-    pageInfoEl.textContent = `Page ${currentPage} / ${totalPages}`;
-  }
-
-  function rebuildOnResize() {
-    // Simple safe reload to keep layout stable on orientation change / resize
-    if (!pdfDoc) return;
-    location.reload();
   }
 
   function debounce(fn, delay) {
@@ -230,71 +192,5 @@
       timeout = setTimeout(() => fn.apply(this, arguments), delay);
     };
   }
-})();
-// ===== Mobile swipe support (add at end of script.js) =====
-(function () {
-  let startX = 0;
-  let endX = 0;
 
-  function safeNext() {
-    try {
-      if (typeof goNext === "function") return goNext();
-      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("next");
-    } catch (e) {}
-  }
-
-  function safePrev() {
-    try {
-      if (typeof goPrev === "function") return goPrev();
-      if (window.jQuery && $("#flipbook").data("turn")) $("#flipbook").turn("previous");
-    } catch (e) {}
-  }
-
-  function attachSwipe() {
-    const target =
-      document.querySelector(".flipbook-shell") ||
-      document.getElementById("flipbook") ||
-      document.body;
-
-    if (!target || target.dataset.swipeAttached === "yes") return;
-    target.dataset.swipeAttached = "yes";
-
-    target.addEventListener(
-      "touchstart",
-      function (e) {
-        if (!e.touches || !e.touches.length) return;
-        startX = e.touches[0].clientX;
-      },
-      { passive: true }
-    );
-
-    target.addEventListener(
-      "touchend",
-      function (e) {
-        if (!e.changedTouches || !e.changedTouches.length) return;
-        endX = e.changedTouches[0].clientX;
-
-        const diff = startX - endX;
-        const minSwipe = 35; // sensitivity
-
-        if (Math.abs(diff) < minSwipe) return;
-
-        if (diff > 0) {
-          // swipe left = next
-          safeNext();
-        } else {
-          // swipe right = previous
-          safePrev();
-        }
-      },
-      { passive: true }
-    );
-  }
-
-  // try immediately
-  attachSwipe();
-
-  // try again after flipbook loads
-  setTimeout(attachSwipe, 800);
-  setTimeout(attachSwipe, 1500);
 })();
