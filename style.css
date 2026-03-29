@@ -1,0 +1,255 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  font-family: "Georgia", "Times New Roman", serif;
+  background: #120d0b;
+  color: #f7e7c6;
+}
+
+body {
+  position: relative;
+}
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(212, 175, 55, 0.15), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(255, 215, 160, 0.08), transparent 35%),
+    linear-gradient(135deg, #120d0b, #1b120d, #24160f);
+  z-index: 0;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.top-bar,
+.bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(25, 16, 12, 0.7);
+  border-radius: 18px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.brand-wrap h1 {
+  font-size: 1.4rem;
+  color: #f5d28a;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #d7c19a;
+}
+
+.controls-top,
+.music-panel,
+.link-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.viewer-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68vh;
+}
+
+.book-frame {
+  width: 100%;
+  max-width: 1280px;
+  padding: 18px;
+  border-radius: 26px;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: rgba(22, 14, 11, 0.55);
+  box-shadow:
+    0 18px 50px rgba(0,0,0,0.45),
+    inset 0 0 40px rgba(212, 175, 55, 0.05);
+  overflow: hidden;
+}
+
+#flipbook {
+  margin: 0 auto;
+  display: none;
+}
+
+.page {
+  background: #fffdf9;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+.page canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.btn {
+  border: none;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.gold-btn {
+  background: linear-gradient(135deg, #f5d28a, #c9982f);
+  color: #2a1807;
+  box-shadow: 0 8px 18px rgba(201, 152, 47, 0.25);
+}
+
+.music-btn {
+  background: linear-gradient(135deg, #f5d28a, #c9982f);
+  color: #2a1807;
+}
+
+.secondary-btn {
+  background: rgba(255,255,255,0.08);
+  color: #f7e7c6;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.page-info,
+#musicLabel {
+  font-size: 0.95rem;
+  color: #e8d7b0;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loader-card {
+  width: min(90%, 420px);
+  padding: 28px 22px;
+  text-align: center;
+  border-radius: 22px;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  background: rgba(30, 18, 12, 0.92);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+.loader-card h2 {
+  font-size: 1.25rem;
+  color: #f5d28a;
+  margin-bottom: 8px;
+}
+
+.loader-card p {
+  color: #d7c19a;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 52px;
+  height: 52px;
+  border: 4px solid rgba(245, 210, 138, 0.2);
+  border-top-color: #f5d28a;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-box {
+  text-align: center;
+  color: #ffd6d6;
+  background: rgba(90, 20, 20, 0.35);
+  border: 1px solid rgba(255, 120, 120, 0.25);
+  padding: 20px;
+  border-radius: 18px;
+  max-width: 600px;
+  margin: 40px auto;
+}
+
+@media (max-width: 900px) {
+  .top-bar,
+  .bottom-bar {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .brand-wrap {
+    width: 100%;
+  }
+
+  .brand-wrap h1 {
+    font-size: 1.2rem;
+  }
+
+  .viewer-area {
+    min-height: 60vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .top-bar,
+  .bottom-bar {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .book-frame {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .btn {
+    padding: 9px 14px;
+    font-size: 0.9rem;
+  }
+
+  .page-info,
+  #musicLabel,
+  .subtitle {
+    font-size: 0.85rem;
+  }
+}
