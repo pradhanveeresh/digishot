@@ -4,7 +4,6 @@
     const appBg = document.getElementById("app-bg");
     const audioEl = document.getElementById("bgMusic");
 
-    // URL Parameters
     const params = new URLSearchParams(window.location.search);
     const album = params.get("album") || "test";
     const bg = params.get("bg") || "bg01"; 
@@ -13,40 +12,43 @@
     let pageFlip = null;
     let isBookReady = false;
 
-    // --- 1. Background & Snowfall ---
+    // Background & Snowfall Logic
     function initVisuals() {
-        // Dynamic Background with Fallback
         const bgImg = new Image();
         bgImg.src = `./assets/bg/${bg}.jpg`;
         bgImg.onload = () => appBg.style.backgroundImage = `url('${bgImg.src}')`;
         bgImg.onerror = () => appBg.style.backgroundImage = `url('./assets/bg/bg01.jpg')`;
 
-        // Particles/Snowfall
         if (window.particlesJS) {
             particlesJS("particles-js", {
                 "particles": {
                     "number": { "value": 40 },
                     "color": { "value": "#ffffff" },
-                    "opacity": { "value": 0.5 },
-                    "size": { "value": 3 },
-                    "move": { "enable": true, "speed": 1, "direction": "bottom" }
+                    "move": { "enable": true, "speed": 1.2, "direction": "bottom" }
                 }
             });
         }
     }
 
-    // --- 2. Load PDF and Build 3D Book ---
-    async function buildFlipbook() {
-        if (!window.pdfjsLib || !window.StPageFlip) {
-            console.error("Libraries not loaded yet!");
+    async function buildBook() {
+        // --- 1. Library Check (Simple & Clear) ---
+        if (!window.pdfjsLib) {
+            console.error("PDF.js not found!");
+            loadingOverlay.innerHTML = "<h3 style='color:white'>Error: PDF.js Library Missing!</h3>";
+            return;
+        }
+        if (!window.StPageFlip) {
+            console.error("StPageFlip not found!");
+            loadingOverlay.innerHTML = "<h3 style='color:white'>Error: PageFlip Library Missing!</h3>";
             return;
         }
 
         try {
+            // PDF load karna
             const pdf = await pdfjsLib.getDocument(`./albums/${album}.pdf`).promise;
             const total = pdf.numPages;
 
-            // Size Logic (Maximize screen usage)
+            // Size Fix
             const winW = window.innerWidth;
             const winH = window.innerHeight;
             let bW = winW * 0.94;
@@ -64,14 +66,14 @@
 
             bookContainer.innerHTML = '';
 
-            // A. Create Front Cover (Hard 3D)
-            const fCover = document.createElement("div");
-            fCover.className = "page -hard";
-            fCover.style.backgroundImage = `url('./assets/covers/${album}.jpg')`;
-            fCover.style.backgroundSize = "cover";
-            bookContainer.appendChild(fCover);
+            // A. Create Cover
+            const front = document.createElement("div");
+            front.className = "page -hard";
+            front.style.backgroundImage = `url('./assets/covers/${album}.jpg')`;
+            front.style.backgroundSize = "cover";
+            bookContainer.appendChild(front);
 
-            // B. Create & Render PDF Pages
+            // B. Create inner pages
             for (let i = 1; i <= total; i++) {
                 const pDiv = document.createElement("div");
                 pDiv.className = "page";
@@ -86,18 +88,16 @@
                 await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
             }
 
-            // C. Create Back Cover
-            const bCover = document.createElement("div");
-            bCover.className = "page -hard";
-            bCover.style.backgroundColor = "#2c2e33";
-            bookContainer.appendChild(bCover);
+            // C. Back Cover
+            const back = document.createElement("div");
+            back.className = "page -hard";
+            back.style.backgroundColor = "#2c2e33";
+            bookContainer.appendChild(back);
 
-            // D. Initialize 3D Library
+            // D. Init Library (StPageFlip.PageFlip use karein)
             pageFlip = new StPageFlip.PageFlip(bookContainer, {
-                width: pW, height: pH,
-                size: "stretch",
-                showCover: true,
-                drawShadow: true,
+                width: pW, height: pH, size: "stretch",
+                showCover: true, drawShadow: true,
                 usePortrait: (winW < winH),
                 flippingTime: 1000
             });
@@ -105,38 +105,28 @@
             pageFlip.loadFromHTML(bookContainer.querySelectorAll(".page"));
             isBookReady = true;
 
-            // Hide Preloader
+            // Hide Logo
             loadingOverlay.style.opacity = "0";
             setTimeout(() => loadingOverlay.style.display = "none", 500);
 
         } catch (err) {
             console.error(err);
-            loadingOverlay.innerHTML = `<p style="color:white; padding:20px;">PDF Error: Check albums/${album}.pdf path</p>`;
+            loadingOverlay.innerHTML = `<h3 style='color:white; padding:20px;'>PDF NOT FOUND!<br>Check path: albums/${album}.pdf</h3>`;
         }
     }
 
-    // --- 3. Button Events ---
+    // Controls
     document.getElementById("prevBtn").onclick = () => isBookReady && pageFlip.flipPrev();
     document.getElementById("nextBtn").onclick = () => isBookReady && pageFlip.flipNext();
-    
     document.getElementById("musicToggle").onclick = () => {
         if (!audioEl.src) audioEl.src = `./music/${music}.mp3`;
         audioEl.paused ? audioEl.play() : audioEl.pause();
     };
-
     document.getElementById("fullscreenBtn").onclick = () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            document.exitFullscreen();
-        }
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
     };
 
-    // Run
     initVisuals();
-    buildFlipbook();
-
-    // Safety: Hide logo after 10s
-    setTimeout(() => { if(loadingOverlay.style.display !== 'none') loadingOverlay.style.display = 'none'; }, 10000);
-
+    buildBook();
 })();
