@@ -1,6 +1,7 @@
 (function () {
   const flipbookEl = document.getElementById("flipbook");
   const loadingOverlay = document.getElementById("loadingOverlay");
+  const appBg = document.getElementById("app-bg"); // New Background Layer
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const musicToggleBtn = document.getElementById("musicToggle");
@@ -10,17 +11,45 @@
   const params = new URLSearchParams(window.location.search);
   const albumName = sanitizeName(params.get("album")) || "test";
   const musicName = sanitizeName(params.get("music")) || "ringtone";
+  const bgName = sanitizeName(params.get("bg")) || "bg01"; // Default bg01
 
   const pdfPath = `./albums/${albumName}.pdf`;
   const musicPath = `./music/${musicName}.mp3`;
+  const coverPath = `./assets/covers/${albumName}.jpg`; // Dynamic Cover Path
 
   let pdfDoc = null;
-  let totalPages = 0;
   let isMusicPlaying = false;
   let isBookReady = false;
   let initialWidth = window.innerWidth;
   let isFullscreenToggling = false;
 
+  // --- 1. Background Logic (With Fallback) ---
+  function initBackground() {
+    const img = new Image();
+    const primaryPath = `./assets/bg/${bgName}.jpg`;
+    const defaultPath = `./assets/bg/bg01.jpg`;
+
+    img.src = primaryPath;
+    img.onload = () => appBg.style.backgroundImage = `url('${primaryPath}')`;
+    img.onerror = () => appBg.style.backgroundImage = `url('${defaultPath}')`;
+  }
+
+  // --- 2. Snowfall Logic ---
+  function initSnowfall() {
+    if (window.particlesJS) {
+      particlesJS("particles-js", {
+        "particles": {
+          "number": { "value": 45 },
+          "color": { "value": "#ffffff" },
+          "opacity": { "value": 0.5 },
+          "size": { "value": 3 },
+          "move": { "enable": true, "speed": 1.2, "direction": "bottom" }
+        }
+      });
+    }
+  }
+
+  // --- Existing Listeners & Helpers ---
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
   fsEvents.forEach(evt => {
     document.addEventListener(evt, () => {
@@ -33,9 +62,9 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
   }
 
-  // Button Listeners
   prevBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("previous"); });
   nextBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("next"); });
+  
   musicToggleBtn.addEventListener("click", async () => {
     try {
       if (isMusicPlaying) { audioEl.pause(); isMusicPlaying = false; musicToggleBtn.style.background = "rgba(255,255,255,0.1)"; }
@@ -45,7 +74,6 @@
 
   fullscreenBtn.addEventListener("click", () => {
     isFullscreenToggling = true;
-    setTimeout(() => { isFullscreenToggling = false; }, 1000);
     const elem = document.documentElement;
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       if (elem.requestFullscreen) elem.requestFullscreen();
@@ -56,64 +84,84 @@
     }
   });
 
+  // Init Calls
+  initBackground();
+  initSnowfall();
   loadMusic();
   loadPdfAndBuild();
 
   function sanitizeName(value) { return value ? value.replace(/[^a-zA-Z0-9-_]/g, "") : ""; }
   function loadMusic() { audioEl.src = musicPath; audioEl.load(); }
 
+  // --- 3. Build Flipbook (Updated for Cover & Fallback) ---
   async function loadPdfAndBuild() {
     if (!window.pdfjsLib) return;
     try {
       const loadingTask = pdfjsLib.getDocument(pdfPath);
       pdfDoc = await loadingTask.promise;
-      totalPages = pdfDoc.numPages;
+      const totalPages = pdfDoc.numPages;
 
-      // ALBUM SIZE (Ab niche ki patti ka area bhi album use karega)
       const winW = window.innerWidth;
       const winH = window.innerHeight;
       
-      let bookWidth = winW * 0.96; 
-      let bookHeight = bookWidth / 1.5; // Double page ratio
-      
-      // Agar height screen se bahar ja rahi ho to adjust karein
-      if (bookHeight > winH * 0.92) {
-        bookHeight = winH * 0.92;
+      let bookWidth = winW * 0.94; 
+      let bookHeight = bookWidth / 1.5; 
+      if (bookHeight > winH * 0.88) {
+        bookHeight = winH * 0.88;
         bookWidth = bookHeight * 1.5;
       }
 
-      const pageWidth = bookWidth / 2;
-      const backCover = document.querySelector('.back-cover');
+      // Clear flipbook container for fresh start
+      flipbookEl.innerHTML = '';
 
+      // A. Add Front Cover (Dynamic Image)
+      const frontCover = document.createElement("div");
+      frontCover.className = "hard front-cover";
+      frontCover.style.backgroundImage = `url('${coverPath}')`;
+      frontCover.style.backgroundSize = "cover";
+      flipbookEl.appendChild(frontCover);
+
+      // B. Add PDF Pages
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const pageDiv = document.createElement("div");
         pageDiv.className = "page"; 
         const canvas = document.createElement("canvas");
         pageDiv.appendChild(canvas);
-        flipbookEl.insertBefore(pageDiv, backCover);
-        await renderPdfPage(pageNum, canvas, pageWidth);
+        flipbookEl.appendChild(pageDiv);
+        await renderPdfPage(pageNum, canvas);
       }
 
+      // C. Add Back Cover
+      const backCover = document.createElement("div");
+      backCover.className = "hard back-cover";
+      backCover.style.backgroundColor = "#2c2e33";
+      flipbookEl.appendChild(backCover);
+
+      // Initialize TurnJS
       $(flipbookEl).turn({
         width: bookWidth,
         height: bookHeight,
         autoCenter: true,
         display: "double",
         acceleration: true,
-        duration: 800
+        duration: 1000,
+        gradients: true
       });
 
       isBookReady = true;
-      loadingOverlay.style.display = "none";
+      $(loadingOverlay).fadeOut(500);
 
       window.addEventListener("resize", debounce(() => { 
         if (!isFullscreenToggling && Math.abs(window.innerWidth - initialWidth) > 100) location.reload(); 
       }, 500));
 
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error(e); 
+        loadingOverlay.innerHTML = `<h3 style="color:white; text-align:center;">Album Not Found!<br>Check albums/${albumName}.pdf</h3>`;
+    }
   }
 
-  async function renderPdfPage(pageNum, canvas, targetWidth) {
+  async function renderPdfPage(pageNum, canvas) {
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: 2 }); 
     const context = canvas.getContext("2d");
