@@ -3,25 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DigiShot Premium 3D</title>
-    
+    <title>DigiShot Premium 3D (Offline)</title>
     <link rel="stylesheet" href="./style.css">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-
-    <script>
-        // PDF Worker ko online link se connect karna zaroori hai
-        if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-        }
-    </script>
+    <script src="./libs/pdf.min.js"></script>
+    <script src="./libs/page-flip.browser.min.js"></script>
+    <script src="./libs/particles.min.js"></script>
 </head>
 <body>
-
     <div id="app-bg" class="app-background"></div>
     <div id="particles-js"></div>
 
@@ -36,7 +25,6 @@
         <main class="viewer-area">
             <div id="book-container" class="book-container"></div>
         </main>
-
         <div class="bottom-bar-left">
             <button id="prevBtn" class="control-btn">◀</button>
             <button id="nextBtn" class="control-btn">▶</button>
