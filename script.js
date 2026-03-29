@@ -1,3 +1,6 @@
+console.log("PDF.js Type:", typeof pdfjsLib);
+console.log("PageFlip Type:", typeof StPageFlip);
+console.log("Particles Type:", typeof particlesJS);
 (function () {
     const bookContainer = document.getElementById("book-container");
     const loadingOverlay = document.getElementById("loadingOverlay");
