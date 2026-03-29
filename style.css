@@ -1,5 +1,5 @@
 /* =========================================
-   DIGISHOT PREMIUM CSS (Force Fixes)
+   DIGISHOT PREMIUM CSS (Final Fix)
 ========================================= */
 
 * {
@@ -10,24 +10,20 @@
   outline: none;
 }
 
-/* --- 1. Background Fix (Direct on Body) --- */
+/* Background Fix */
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden; 
   font-family: sans-serif;
-  
-  /* Ye 100% Red Dotted Matte Background layega */
   background-color: #5a1818 !important; 
   background-image: radial-gradient(#350a0a 2px, transparent 2px) !important;
   background-size: 20px 20px !important;
 }
 
-.page-bg {
-  display: none; /* Iski ab zaroorat nahi */
-}
+.page-bg { display: none; }
 
-/* --- Preloader (Sirf Logo) --- */
+/* Preloader */
 .loading-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -60,7 +56,7 @@ html, body {
   100% { transform: scale(1.05); }
 }
 
-/* --- App Layout --- */
+/* App Layout */
 .app-shell {
   position: relative;
   z-index: 1;
@@ -75,7 +71,7 @@ html, body {
   align-items: center;
   justify-content: center;
   perspective: 2000px;
-  padding-bottom: 60px; 
+  padding-bottom: 70px; /* Bade buttons ke hisaab se jagah */
 }
 
 .book-frame {
@@ -86,9 +82,8 @@ html, body {
   height: 100%;
 }
 
-/* --- 2. Hard Cover FIX (Force Dark Grey) --- */
+/* Hard Cover */
 .hard {
-  /* !important lagana zaroori hai warna turn.js isko white kar dega */
   background-color: #2c2e33 !important;
   box-shadow: inset 0 0 0 6px #2c2e33, inset 0 0 0 8px #1a1b1e, inset 0 0 0 10px #2c2e33, 5px 10px 20px rgba(0,0,0,0.6) !important;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E") !important;
@@ -110,33 +105,31 @@ html, body {
 
 .page { background-color: #ffffff !important; }
 
-/* --- 3. Fixed Bottom Controls FIX (Force Horizontal) --- */
+/* Fixed Bottom Controls */
 .bottom-bar-fixed {
   position: fixed !important;
   bottom: 0 !important;
   left: 0 !important;
   width: 100% !important;
-  height: 60px !important;
+  height: 80px !important; /* Laptop me height thodi jyada */
   background: #1a1a1a !important;
   border-top: 2px solid #333 !important;
-  
-  /* Ye buttons ko ek line me force karega */
   display: flex !important;
   flex-direction: row !important; 
   align-items: center !important;
   justify-content: center !important;
-  gap: 20px !important;
+  gap: 30px !important;
   z-index: 1000 !important;
 }
 
+/* LAPTOP VIEW BUTTONS (Bade honge) */
 .control-btn {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 8px !important; 
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 12px !important; 
   background: #444444 !important; 
   color: #dddddd !important;
-  font-size: 18px !important;
-  
+  font-size: 26px !important;
   flex-shrink: 0 !important;
   display: flex !important;
   align-items: center !important;
@@ -147,15 +140,17 @@ html, body {
 
 .control-btn:hover {
   background: #666666 !important;
-  transform: translateY(-2px) !important;
+  transform: translateY(-3px) !important;
 }
 
+/* MOBILE VIEW BUTTONS (Sahi size) */
 @media (max-width: 768px) {
   .control-btn {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 16px !important;
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 20px !important;
+    border-radius: 8px !important;
   }
-  .bottom-bar-fixed { gap: 15px !important; height: 55px !important; }
-  .viewer-area { padding-bottom: 55px !important; }
+  .bottom-bar-fixed { gap: 15px !important; height: 60px !important; }
+  .viewer-area { padding-bottom: 60px !important; }
 }
