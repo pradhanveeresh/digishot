@@ -3,21 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DigiShot Premium 3D Flipbook</title>
+    <title>DigiShot Premium 3D</title>
     
     <link rel="stylesheet" href="./style.css">
 
-    <script src="./libs/pdf.min.js"></script>
-    <script src="./libs/pdf.worker.min.js"></script>
-
-    <script src="./libs/page-flip.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     
-    <script src="./libs/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+    <script>
+        // PDF Worker ko online link se connect karna zaroori hai
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
+    </script>
 </head>
 <body>
 
     <div id="app-bg" class="app-background"></div>
-
     <div id="particles-js"></div>
 
     <div id="loadingOverlay" class="loading-overlay">
@@ -29,20 +34,18 @@
 
     <div class="app-shell">
         <main class="viewer-area">
-            <div id="book-container" class="book-container">
-                </div>
+            <div id="book-container" class="book-container"></div>
         </main>
 
         <div class="bottom-bar-left">
-            <button id="prevBtn" class="control-btn" title="Previous">◀</button>
-            <button id="nextBtn" class="control-btn" title="Next">▶</button>
-            <button id="musicToggle" class="control-btn" title="Music">🎵</button>
-            <button id="fullscreenBtn" class="control-btn" title="Full Screen">⛶</button>
+            <button id="prevBtn" class="control-btn">◀</button>
+            <button id="nextBtn" class="control-btn">▶</button>
+            <button id="musicToggle" class="control-btn">🎵</button>
+            <button id="fullscreenBtn" class="control-btn">⛶</button>
         </div>
     </div>
 
     <audio id="bgMusic" loop></audio>
-
     <script src="./script.js"></script>
 </body>
 </html>
