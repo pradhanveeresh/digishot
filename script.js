@@ -18,18 +18,14 @@
   let totalPages = 0;
   let isMusicPlaying = false;
   let isBookReady = false;
-  
-  // Screen reload block karne ke liye naye variables
   let initialWidth = window.innerWidth;
   let isFullscreenToggling = false;
 
-  // Fullscreen change detect karne ke liye listeners (Button ya ESC key)
   const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
   fsEvents.forEach(evt => {
     document.addEventListener(evt, () => {
       isFullscreenToggling = true;
-      // 1.5 second tak page reload ko poori tarah block rakhega
-      setTimeout(() => { isFullscreenToggling = false; }, 1500);
+      setTimeout(() => { isFullscreenToggling = false; }, 1000);
     });
   });
 
@@ -37,39 +33,26 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
   }
 
-  // --- Buttons Logic ---
+  // Button Listeners
   prevBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("previous"); });
   nextBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("next"); });
-
   musicToggleBtn.addEventListener("click", async () => {
-    if (!audioEl.src) return;
     try {
-      if (isMusicPlaying) {
-        audioEl.pause();
-        isMusicPlaying = false;
-        musicToggleBtn.style.background = "#444444";
-      } else {
-        await audioEl.play();
-        isMusicPlaying = true;
-        musicToggleBtn.style.background = "#777777"; 
-      }
-    } catch (err) { console.log(err); }
+      if (isMusicPlaying) { audioEl.pause(); isMusicPlaying = false; musicToggleBtn.style.background = "rgba(255,255,255,0.1)"; }
+      else { await audioEl.play(); isMusicPlaying = true; musicToggleBtn.style.background = "rgba(255,255,255,0.3)"; }
+    } catch (e) {}
   });
 
-  // PERFECT FULLSCREEN LOGIC
   fullscreenBtn.addEventListener("click", () => {
     isFullscreenToggling = true;
-    setTimeout(() => { isFullscreenToggling = false; }, 1500);
-
+    setTimeout(() => { isFullscreenToggling = false; }, 1000);
     const elem = document.documentElement;
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
-      if (elem.requestFullscreen) { elem.requestFullscreen(); }
-      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
-      else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     } else {
-      if (document.exitFullscreen) { document.exitFullscreen(); }
-      else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
-      else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
   });
 
@@ -81,23 +64,22 @@
 
   async function loadPdfAndBuild() {
     if (!window.pdfjsLib) return;
-
     try {
       const loadingTask = pdfjsLib.getDocument(pdfPath);
       pdfDoc = await loadingTask.promise;
       totalPages = pdfDoc.numPages;
 
-      if (!totalPages) return;
-
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight - 80; 
+      // ALBUM SIZE (Ab niche ki patti ka area bhi album use karega)
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
       
-      let bookWidth = screenWidth * 0.95; 
-      let bookHeight = bookWidth * 0.65;  
+      let bookWidth = winW * 0.96; 
+      let bookHeight = bookWidth / 1.5; // Double page ratio
       
-      if (bookHeight > screenHeight * 0.85) {
-        bookHeight = screenHeight * 0.85;
-        bookWidth = bookHeight / 0.65;
+      // Agar height screen se bahar ja rahi ho to adjust karein
+      if (bookHeight > winH * 0.92) {
+        bookHeight = winH * 0.92;
+        bookWidth = bookHeight * 1.5;
       }
 
       const pageWidth = bookWidth / 2;
@@ -105,12 +87,9 @@
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const pageDiv = document.createElement("div");
-        pageDiv.className = "page normal-page"; 
-        pageDiv.style.backgroundColor = "#fff";
-
+        pageDiv.className = "page"; 
         const canvas = document.createElement("canvas");
         pageDiv.appendChild(canvas);
-        
         flipbookEl.insertBefore(pageDiv, backCover);
         await renderPdfPage(pageNum, canvas, pageWidth);
       }
@@ -119,52 +98,33 @@
         width: bookWidth,
         height: bookHeight,
         autoCenter: true,
-        elevation: 50,
-        gradients: true,
         display: "double",
-        duration: 1000
+        acceleration: true,
+        duration: 800
       });
 
       isBookReady = true;
+      loadingOverlay.style.display = "none";
 
-      setTimeout(() => {
-        loadingOverlay.style.opacity = "0";
-        setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
-      }, 500);
-
-      // SMART RESIZE FIX
       window.addEventListener("resize", debounce(() => { 
-        // Agar fullscreen ho raha hai ya already fullscreen mode me hai, to reload BLOCK karo
-        if (isFullscreenToggling || document.fullscreenElement || document.webkitFullscreenElement) {
-          return; 
-        }
-        
-        // Sirf tab reload karo jab screen ki chaurai (width) sach me badle (jaise phone rotate karne par)
-        if (Math.abs(window.innerWidth - initialWidth) > 50) {
-          location.reload(); 
-        }
+        if (!isFullscreenToggling && Math.abs(window.innerWidth - initialWidth) > 100) location.reload(); 
       }, 500));
 
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (e) { console.error(e); }
   }
 
   async function renderPdfPage(pageNum, canvas, targetWidth) {
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 1.5 }); 
+    const viewport = page.getViewport({ scale: 2 }); 
     const context = canvas.getContext("2d");
-    
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     canvas.style.width = "100%";
     canvas.style.height = "100%";
-
     await page.render({ canvasContext: context, viewport: viewport }).promise;
   }
 
   function debounce(fn, delay) {
-    let timeout;
-    return function () { clearTimeout(timeout); timeout = setTimeout(() => fn.apply(this, arguments), delay); };
+    let t; return function() { clearTimeout(t); t = setTimeout(() => fn.apply(this, arguments), delay); };
   }
 })();
