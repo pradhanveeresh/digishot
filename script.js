@@ -1,5 +1,4 @@
 (function () {
-  // Elements ko select karna
   const flipbookEl = document.getElementById("flipbook");
   const loadingOverlay = document.getElementById("loadingOverlay");
   const prevBtn = document.getElementById("prevBtn");
@@ -8,7 +7,6 @@
   const fullscreenBtn = document.getElementById("fullscreenBtn");
   const audioEl = document.getElementById("bgMusic");
 
-  // URL se PDF aur Music ka naam lena (Ya default use karna)
   const params = new URLSearchParams(window.location.search);
   const albumName = sanitizeName(params.get("album")) || "test";
   const musicName = sanitizeName(params.get("music")) || "ringtone";
@@ -21,157 +19,116 @@
   let isMusicPlaying = false;
   let isBookReady = false;
 
-  // PDF.js worker setup
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
   }
 
-  // --- Button Controls ---
+  // --- Buttons Logic ---
+  prevBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("previous"); });
+  nextBtn.addEventListener("click", () => { if (isBookReady) $(flipbookEl).turn("next"); });
 
-  // 1. Previous & Next Page
-  prevBtn.addEventListener("click", () => {
-    if (isBookReady) $(flipbookEl).turn("previous");
-  });
-
-  nextBtn.addEventListener("click", () => {
-    if (isBookReady) $(flipbookEl).turn("next");
-  });
-
-  // 2. Play/Pause Music
   musicToggleBtn.addEventListener("click", async () => {
     if (!audioEl.src) return;
     try {
       if (isMusicPlaying) {
         audioEl.pause();
         isMusicPlaying = false;
-        musicToggleBtn.style.filter = "brightness(1)"; // Normal look
+        musicToggleBtn.style.background = "#444";
       } else {
         await audioEl.play();
         isMusicPlaying = true;
-        musicToggleBtn.style.filter = "brightness(0.7)"; // Playing look
+        musicToggleBtn.style.background = "#777"; // Highlight when playing
       }
-    } catch (err) {
-      console.log("Music error:", err);
-    }
+    } catch (err) { console.log(err); }
   });
 
-  // 3. Full Screen Toggle
+  // Cross-browser Fullscreen fix
   fullscreenBtn.addEventListener("click", () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.log(`Error attempting to enable fullscreen: ${err.message}`);
-      });
+    const elem = document.documentElement;
+    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+      if (elem.requestFullscreen) { elem.requestFullscreen(); }
+      else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+      else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
+      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT); }
     } else {
-      document.exitFullscreen();
+      if (document.exitFullscreen) { document.exitFullscreen(); }
+      else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+      else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
+      else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
     }
   });
 
-  // Start initialization
   loadMusic();
   loadPdfAndBuild();
 
-  // --- Helper Functions ---
+  function sanitizeName(value) { return value ? value.replace(/[^a-zA-Z0-9-_]/g, "") : ""; }
+  function loadMusic() { audioEl.src = musicPath; audioEl.load(); }
 
-  function sanitizeName(value) {
-    if (!value) return "";
-    return value.replace(/[^a-zA-Z0-9-_]/g, "");
-  }
-
-  function loadMusic() {
-    audioEl.src = musicPath;
-    audioEl.load();
-  }
-
-  // PDF Load aur Book Banane ka main function
   async function loadPdfAndBuild() {
-    if (!window.pdfjsLib) {
-      alert("PDF.js library not loaded.");
-      return;
-    }
+    if (!window.pdfjsLib) return;
 
     try {
       const loadingTask = pdfjsLib.getDocument(pdfPath);
       pdfDoc = await loadingTask.promise;
       totalPages = pdfDoc.numPages;
 
-      if (!totalPages) {
-        alert("This PDF has no pages.");
-        return;
-      }
+      if (!totalPages) return;
 
-      // Responsive Size Logic (Laptop jaisa Mobile me)
+      // Laptop and Mobile SAME VIEW (Force Double Page)
       const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
+      const screenHeight = window.innerHeight - 60; // Niche wali bar ke liye jagah chhodi
       
-      // Calculate book size keeping aspect ratio (e.g., 800x600 for double page)
-      let bookWidth = screenWidth > 900 ? 1000 : screenWidth * 0.95;
-      let bookHeight = bookWidth * 0.6; // 10:6 aspect ratio
-
-      // Agar height screen se badi ho rahi hai, to height ke hisaab se adjust karein
-      if (bookHeight > screenHeight * 0.75) {
-        bookHeight = screenHeight * 0.75;
-        bookWidth = bookHeight / 0.6;
+      let bookWidth = screenWidth * 0.95; // Screen ka 95% width lega
+      let bookHeight = bookWidth * 0.65;  // 2 pages ke hisaab se height
+      
+      if (bookHeight > screenHeight * 0.85) {
+        bookHeight = screenHeight * 0.85;
+        bookWidth = bookHeight / 0.65;
       }
 
       const pageWidth = bookWidth / 2;
-      const pageHeight = bookHeight;
-
       const backCover = document.querySelector('.back-cover');
 
-      // PDF pages ko Front aur Back cover ke beech me daalna
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const pageDiv = document.createElement("div");
-        pageDiv.className = "page"; 
+        pageDiv.className = "page normal-page"; 
         pageDiv.style.backgroundColor = "#fff";
 
         const canvas = document.createElement("canvas");
         pageDiv.appendChild(canvas);
         
-        // Insert before the back cover
         flipbookEl.insertBefore(pageDiv, backCover);
-
-        // Render PDF frame
         await renderPdfPage(pageNum, canvas, pageWidth);
       }
 
-      // Turn.js initialize karna (FlipHTML5 jaisa smooth effect)
       $(flipbookEl).turn({
         width: bookWidth,
         height: bookHeight,
         autoCenter: true,
-        elevation: 50, // 3D shadow effect
-        gradients: true, // Smooth shading
-        display: "double", // Hamesha dono pages dikhenge (Mobile me bhi)
-        duration: 1200 // Thoda slow aur premium flip
+        elevation: 50,
+        gradients: true,
+        display: "double", // ALWAYS DOUBLE DISPLAY
+        duration: 1000
       });
 
       isBookReady = true;
 
-      // Book ready hone ke baad Preloader smooth fade-out hoga
+      // Smooth Preloader Fade Out
       setTimeout(() => {
-        loadingOverlay.style.transition = "opacity 0.6s ease";
         loadingOverlay.style.opacity = "0";
-        setTimeout(() => {
-          loadingOverlay.style.display = "none";
-        }, 600);
+        setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
       }, 500);
 
-      // Screen size badalne par book adjust ho
-      window.addEventListener("resize", debounce(() => {
-        location.reload();
-      }, 500));
+      window.addEventListener("resize", debounce(() => { location.reload(); }, 500));
 
     } catch (error) {
-      console.error("Error loading PDF:", error);
-      loadingOverlay.innerHTML = `<h3 style="color:white; text-align:center;">Could not load ${albumName}.pdf<br>Check if file exists!</h3>`;
+      console.error(error);
     }
   }
 
   async function renderPdfPage(pageNum, canvas, targetWidth) {
     const page = await pdfDoc.getPage(pageNum);
-    
-    // High Quality Render ke liye scale badhaya gaya hai
-    const viewport = page.getViewport({ scale: 2.0 }); 
+    const viewport = page.getViewport({ scale: 1.5 }); // Good quality zoom
     const context = canvas.getContext("2d");
     
     canvas.width = viewport.width;
@@ -179,18 +136,11 @@
     canvas.style.width = "100%";
     canvas.style.height = "100%";
 
-    await page.render({
-      canvasContext: context,
-      viewport: viewport
-    }).promise;
+    await page.render({ canvasContext: context, viewport: viewport }).promise;
   }
 
   function debounce(fn, delay) {
     let timeout;
-    return function () {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn.apply(this, arguments), delay);
-    };
+    return function () { clearTimeout(timeout); timeout = setTimeout(() => fn.apply(this, arguments), delay); };
   }
-
 })();
