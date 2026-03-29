@@ -1,5 +1,5 @@
 /* =========================================
-   DIGISHOT PREMIUM CSS (No Black Bar + Left Buttons)
+   DIGISHOT PREMIUM CSS (Back to Old Style + New Features)
 ========================================= */
 
 * {
@@ -15,9 +15,36 @@ html, body {
   height: 100%;
   overflow: hidden; 
   font-family: sans-serif;
-  background-color: #5a1818 !important; 
+  background-color: #5a1818 !important; /* Aapka purana Maroon */
+}
+
+/* 1. Dynamic Background Layer (New) */
+#app-bg {
+  position: fixed;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  transition: background-image 0.6s ease;
+}
+
+/* 2. Aapka Purana Dotted Pattern (New Layer pe apply kiya) */
+.page-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image: radial-gradient(#350a0a 2px, transparent 2px) !important;
   background-size: 20px 20px !important;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* 3. Snowfall Layer */
+#particles-js {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* Preloader */
@@ -31,12 +58,20 @@ html, body {
   z-index: 9999;
 }
 
+/* Logo Animation (Optional but Premium) */
+.logo-circle {
+    display: flex; flex-direction: column; align-items: center;
+}
+.text-digi { color: #fff; font-weight: bold; font-size: 24px; }
+.text-shot { color: #666; font-size: 18px; letter-spacing: 2px; }
+
 /* App Layout */
 .app-shell {
   position: relative;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  z-index: 5; /* Taaki buttons aur book upar rahein */
 }
 
 .viewer-area {
@@ -44,55 +79,48 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 10px; /* Ab niche jagah ki dikkat nahi */
+  padding-bottom: 10px;
 }
 
-/* Transparent Bottom Bar with Left Aligned Buttons */
+/* Left Aligned Buttons (Aapka Purana Style) */
 .bottom-bar-fixed {
   position: fixed !important;
   bottom: 15px !important;
   left: 15px !important;
-  width: auto !important; /* Poori chaurai nahi lega */
-  background: transparent !important; /* Black patti khatam */
+  width: auto !important;
+  background: transparent !important;
   display: flex !important;
   gap: 10px !important;
   z-index: 1000 !important;
 }
 
-/* Chhote Buttons (Landscape ke liye optimized) */
 .control-btn {
   width: 40px !important;
   height: 40px !important;
   border-radius: 8px !important; 
-  background: rgba(255, 255, 255, 0.1) !important; /* Halka transparent background */
+  background: rgba(255, 255, 255, 0.1) !important; 
   color: #fff !important;
   font-size: 18px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  backdrop-filter: blur(5px); /* Premium look */
+  backdrop-filter: blur(5px);
   border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
-/* Hard Cover */
+/* Hard Cover & Pages */
 .hard {
   background-color: #2c2e33 !important;
+  background-size: cover; /* Cover image ke liye zaroori */
+  background-position: center;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
 }
 
-.page { background-color: #ffffff !important; }
+.page { 
+    background-color: #ffffff !important; 
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+}
 
 /* Mobile specifically */
-@media (max-width: 768px) {
-  .control-btn {
-    width: 35px !important;
-    height: 35px !important;
-    font-size: 16px !important;
-  }
-  .bottom-bar-fixed {
-    bottom: 10px !important;
-    left: 10px !important;
-    gap: 8px !important;
-  }
-}
+@media
