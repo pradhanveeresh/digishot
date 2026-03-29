@@ -18,6 +18,9 @@
   let totalPages = 0;
   let isMusicPlaying = false;
   let isBookReady = false;
+  
+  // Fullscreen ke waqt reload rokne ke liye flag
+  let ignoreResizeAction = false; 
 
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
@@ -33,27 +36,26 @@
       if (isMusicPlaying) {
         audioEl.pause();
         isMusicPlaying = false;
-        musicToggleBtn.style.background = "#444";
+        musicToggleBtn.style.background = "#444444";
       } else {
         await audioEl.play();
         isMusicPlaying = true;
-        musicToggleBtn.style.background = "#777"; // Highlight when playing
+        musicToggleBtn.style.background = "#777777"; 
       }
     } catch (err) { console.log(err); }
   });
 
-  // Cross-browser Fullscreen fix
+  // Fullscreen Logic (Reload Fix ke sath)
   fullscreenBtn.addEventListener("click", () => {
+    ignoreResizeAction = true; // Agle 1 second tak screen resize hone par reload nahi hoga
+    setTimeout(() => { ignoreResizeAction = false; }, 1000); 
+
     const elem = document.documentElement;
-    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       if (elem.requestFullscreen) { elem.requestFullscreen(); }
-      else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
-      else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
-      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT); }
+      else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
     } else {
       if (document.exitFullscreen) { document.exitFullscreen(); }
-      else if (document.msExitFullscreen) { document.msExitFullscreen(); }
-      else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
       else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
     }
   });
@@ -74,12 +76,11 @@
 
       if (!totalPages) return;
 
-      // Laptop and Mobile SAME VIEW (Force Double Page)
       const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight - 60; // Niche wali bar ke liye jagah chhodi
+      const screenHeight = window.innerHeight - 80; 
       
-      let bookWidth = screenWidth * 0.95; // Screen ka 95% width lega
-      let bookHeight = bookWidth * 0.65;  // 2 pages ke hisaab se height
+      let bookWidth = screenWidth * 0.95; 
+      let bookHeight = bookWidth * 0.65;  
       
       if (bookHeight > screenHeight * 0.85) {
         bookHeight = screenHeight * 0.85;
@@ -107,19 +108,25 @@
         autoCenter: true,
         elevation: 50,
         gradients: true,
-        display: "double", // ALWAYS DOUBLE DISPLAY
+        display: "double",
         duration: 1000
       });
 
       isBookReady = true;
 
-      // Smooth Preloader Fade Out
       setTimeout(() => {
         loadingOverlay.style.opacity = "0";
         setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
       }, 500);
 
-      window.addEventListener("resize", debounce(() => { location.reload(); }, 500));
+      // Resize Listener with Fix
+      window.addEventListener("resize", debounce(() => { 
+        // Agar fullscreen toggle ho raha hai, ya currently full screen me hai, to page refresh mat karo
+        if (ignoreResizeAction || document.fullscreenElement || document.webkitFullscreenElement) {
+          return; 
+        }
+        location.reload(); 
+      }, 500));
 
     } catch (error) {
       console.error(error);
@@ -128,7 +135,7 @@
 
   async function renderPdfPage(pageNum, canvas, targetWidth) {
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 1.5 }); // Good quality zoom
+    const viewport = page.getViewport({ scale: 1.5 }); 
     const context = canvas.getContext("2d");
     
     canvas.width = viewport.width;
