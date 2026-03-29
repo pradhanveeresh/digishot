@@ -19,8 +19,19 @@
   let isMusicPlaying = false;
   let isBookReady = false;
   
-  // Fullscreen ke waqt reload rokne ke liye flag
-  let ignoreResizeAction = false; 
+  // Screen reload block karne ke liye naye variables
+  let initialWidth = window.innerWidth;
+  let isFullscreenToggling = false;
+
+  // Fullscreen change detect karne ke liye listeners (Button ya ESC key)
+  const fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+  fsEvents.forEach(evt => {
+    document.addEventListener(evt, () => {
+      isFullscreenToggling = true;
+      // 1.5 second tak page reload ko poori tarah block rakhega
+      setTimeout(() => { isFullscreenToggling = false; }, 1500);
+    });
+  });
 
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = "./libs/pdf.worker.min.js";
@@ -45,18 +56,20 @@
     } catch (err) { console.log(err); }
   });
 
-  // Fullscreen Logic (Reload Fix ke sath)
+  // PERFECT FULLSCREEN LOGIC
   fullscreenBtn.addEventListener("click", () => {
-    ignoreResizeAction = true; // Agle 1 second tak screen resize hone par reload nahi hoga
-    setTimeout(() => { ignoreResizeAction = false; }, 1000); 
+    isFullscreenToggling = true;
+    setTimeout(() => { isFullscreenToggling = false; }, 1500);
 
     const elem = document.documentElement;
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
       if (elem.requestFullscreen) { elem.requestFullscreen(); }
       else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+      else if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
     } else {
       if (document.exitFullscreen) { document.exitFullscreen(); }
       else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+      else if (document.mozCancelFullScreen) { document.mozCancelFullScreen(); }
     }
   });
 
@@ -119,13 +132,17 @@
         setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
       }, 500);
 
-      // Resize Listener with Fix
+      // SMART RESIZE FIX
       window.addEventListener("resize", debounce(() => { 
-        // Agar fullscreen toggle ho raha hai, ya currently full screen me hai, to page refresh mat karo
-        if (ignoreResizeAction || document.fullscreenElement || document.webkitFullscreenElement) {
+        // Agar fullscreen ho raha hai ya already fullscreen mode me hai, to reload BLOCK karo
+        if (isFullscreenToggling || document.fullscreenElement || document.webkitFullscreenElement) {
           return; 
         }
-        location.reload(); 
+        
+        // Sirf tab reload karo jab screen ki chaurai (width) sach me badle (jaise phone rotate karne par)
+        if (Math.abs(window.innerWidth - initialWidth) > 50) {
+          location.reload(); 
+        }
       }, 500));
 
     } catch (error) {
