@@ -1,98 +1,130 @@
 /* =========================================
-   DIGISHOT PREMIUM CSS (No Black Bar + Left Buttons)
+   DIGISHOT PREMIUM 3D CSS
 ========================================= */
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border: none;
-  outline: none;
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    border: none; outline: none;
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden; 
-  font-family: sans-serif;
-  background-color: #5a1818 !important; 
-  background-image: radial-gradient(#350a0a 2px, transparent 2px) !important;
-  background-size: 20px 20px !important;
+    width: 100%; height: 100%;
+    overflow: hidden; 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #5a1818; /* Matte Red */
 }
 
-/* Preloader */
-.loading-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-color: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+/* 1. Dynamic Background Layer */
+.app-background {
+    position: fixed; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    transition: background-image 0.5s ease;
 }
+
+/* 2. Dotted Pattern Layer */
+.app-background::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(#350a0a 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+    opacity: 0.7;
+}
+
+/* 3. Snowfall Effect Container */
+#particles-js {
+    position: fixed; inset: 0;
+    z-index: 1; /* Background ke upar */
+    pointer-events: none; /* Book par touch kaam kare */
+}
+
+/* Preloader Logo */
+.loading-overlay {
+    position: fixed; inset: 0;
+    background-color: #000;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.logo-circle {
+    width: 140px; height: 140px;
+    border-radius: 50% !important;
+    background: #111;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    animation: pulse 1.5s infinite alternate;
+}
+
+.text-digi { color: #b0b0b0; font-size: 26px; font-weight: 800; letter-spacing: 2px; }
+.text-shot { color: #777; font-size: 22px; font-weight: 300; letter-spacing: 4px; }
+
+@keyframes pulse { 0% { transform: scale(0.95); } 100% { transform: scale(1.05); } }
 
 /* App Layout */
 .app-shell {
-  position: relative;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+    position: relative; z-index: 2; /* Particles ke upar */
+    height: 100vh; display: flex; flex-direction: column;
 }
 
 .viewer-area {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 10px; /* Ab niche jagah ki dikkat nahi */
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
 }
 
-/* Transparent Bottom Bar with Left Aligned Buttons */
-.bottom-bar-fixed {
-  position: fixed !important;
-  bottom: 15px !important;
-  left: 15px !important;
-  width: auto !important; /* Poori chaurai nahi lega */
-  background: transparent !important; /* Black patti khatam */
-  display: flex !important;
-  gap: 10px !important;
-  z-index: 1000 !important;
+/* 3D Book Container */
+.book-container {
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    /* PageFlip library requires explicit perspective */
+    perspective: 2000px; 
 }
 
-/* Chhote Buttons (Landscape ke liye optimized) */
+/* Page Styles (PageFlip uses canvas) */
+.page {
+    background-color: #fff;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+}
+
+/* Hard Cover Style */
+.page.-hard {
+    background-color: #333; /* Default cover color */
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+/* 4. Left Aligned Grey Buttons */
+.bottom-bar-left {
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    display: flex !important;
+    gap: 12px !important;
+    z-index: 1000 !important;
+}
+
 .control-btn {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 8px !important; 
-  background: rgba(255, 255, 255, 0.1) !important; /* Halka transparent background */
-  color: #fff !important;
-  font-size: 18px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  backdrop-filter: blur(5px); /* Premium look */
-  border: 1px solid rgba(255,255,255,0.1) !important;
+    width: 45px !important; height: 45px !important;
+    border-radius: 10px !important; 
+    background: rgba(80, 80, 80, 0.5) !important; /* Premium Grey Transparent */
+    color: #fff !important;
+    font-size: 20px !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    cursor: pointer !important;
+    backdrop-filter: blur(5px); /* Blur effect */
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    transition: all 0.2s ease !important;
 }
 
-/* Hard Cover */
-.hard {
-  background-color: #2c2e33 !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+.control-btn:hover {
+    background: rgba(120, 120, 120, 0.7) !important;
+    transform: translateY(-3px) scale(1.05) !important;
 }
 
-.page { background-color: #ffffff !important; }
-
-/* Mobile specifically */
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  .control-btn {
-    width: 35px !important;
-    height: 35px !important;
-    font-size: 16px !important;
-  }
-  .bottom-bar-fixed {
-    bottom: 10px !important;
-    left: 10px !important;
-    gap: 8px !important;
-  }
+    .control-btn { width: 38px !important; height: 38px !important; font-size: 16px !important; }
+    .bottom-bar-left { bottom: 15px !important; left: 15px !important; gap: 10px !important; }
 }
